@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Antwerpen '26">
+<title>Antwerpen · Apr 2026</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap');
+  :root {
+    --gold: #C9A84C; --dark: #111010; --mid: #1E1C1A; --card: #252220;
+    --text: #E8E2D9; --muted: #7A7268; --accent: #E8624A; --green: #5A8A6A;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { background: var(--dark); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 15px; line-height: 1.5; min-height: 100vh; }
+
+  header { background: linear-gradient(160deg, #1A1510 0%, #0E0C09 100%); padding: 52px 20px 20px; border-bottom: 1px solid #2A2620; position: relative; overflow: hidden; }
+  header::before { content: ''; position: absolute; top: -40px; right: -40px; width: 200px; height: 200px; border-radius: 50%; background: radial-gradient(circle, rgba(201,168,76,0.1) 0%, transparent 70%); }
+  .city-label { font-size: 11px; font-weight: 500; letter-spacing: 0.2em; color: var(--gold); text-transform: uppercase; margin-bottom: 4px; }
+  header h1 { font-family: 'Playfair Display', serif; font-size: 34px; font-weight: 700; color: var(--text); }
+  header h1 span { color: var(--gold); }
+  .date-badge { display: inline-block; margin-top: 10px; background: rgba(201,168,76,0.12); border: 1px solid rgba(201,168,76,0.3); color: var(--gold); font-size: 12px; font-weight: 500; letter-spacing: 0.06em; padding: 4px 12px; border-radius: 20px; }
+
+  .tab-bar { display: flex; background: #161412; border-bottom: 1px solid #2A2620; position: sticky; top: 0; z-index: 200; }
+  .tab-btn { flex: 1; padding: 12px 4px; background: none; border: none; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 500; color: var(--muted); letter-spacing: 0.04em; border-bottom: 2px solid transparent; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .tab-btn .tab-icon { font-size: 18px; }
+  .tab-btn.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+  .panel { display: none; padding-bottom: 40px; }
+  .panel.active { display: block; }
+  #panel-kaart { padding-bottom: 0; }
+  #map { height: calc(100vh - 128px); width: 100%; }
+
+  .section { padding: 22px 16px 0; }
+  .section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 13px; }
+  .section-icon { width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
+  .icon-gold { background: rgba(201,168,76,0.15); }
+  .icon-red  { background: rgba(232,98,74,0.15); }
+  .icon-green{ background: rgba(90,138,106,0.15); }
+  .icon-blue { background: rgba(74,124,181,0.15); }
+  .icon-vinyl{ background: rgba(180,100,200,0.15); }
+  .section-header h2 { font-family: 'Playfair Display', serif; font-size: 19px; font-weight: 700; color: var(--text); }
+
+  .pass-card { background: linear-gradient(135deg, #1E1A10 0%, #2A2210 100%); border: 1px solid rgba(201,168,76,0.35); border-radius: 14px; padding: 16px; margin-bottom: 10px; }
+  .pass-price { font-family: 'Playfair Display', serif; font-size: 26px; color: var(--gold); font-weight: 700; }
+  .pass-price span { font-family: 'DM Sans',sans-serif; font-size: 13px; color: var(--muted); font-weight: 400; }
+  .pass-features { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+  .pass-feature { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text); }
+  .pass-feature::before { content: '✓'; color: var(--gold); font-weight: 700; flex-shrink: 0; }
+  .savings-pill { display: inline-block; margin-top: 10px; background: rgba(90,138,106,0.2); border: 1px solid rgba(90,138,106,0.4); color: #7DC492; font-size: 12px; font-weight: 500; padding: 4px 10px; border-radius: 12px; }
+
+  .museum-card { background: var(--card); border: 1px solid #2E2B27; border-radius: 13px; padding: 14px; margin-bottom: 8px; }
+  .museum-name { font-family: 'Playfair Display', serif; font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 3px; }
+  .museum-highlight { font-size: 12px; color: var(--gold); margin-bottom: 9px; }
+  .hours-row { display: flex; gap: 7px; }
+  .hours-pill { flex: 1; background: rgba(255,255,255,0.05); border-radius: 7px; padding: 7px; text-align: center; }
+  .hours-day { font-size: 10px; font-weight: 500; letter-spacing: 0.08em; color: var(--muted); text-transform: uppercase; display: block; }
+  .hours-time { font-size: 13px; font-weight: 500; color: var(--text); display: block; margin-top: 1px; }
+  .tip-tag { display: inline-block; margin-top: 9px; background: rgba(232,98,74,0.12); border: 1px solid rgba(232,98,74,0.3); color: #F0876D; font-size: 11px; font-weight: 500; padding: 3px 9px; border-radius: 10px; }
+
+  .resto-card { background: var(--card); border: 1px solid #2E2B27; border-radius: 13px; padding: 14px; margin-bottom: 8px; display: flex; gap: 11px; }
+  .resto-num { font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 700; color: rgba(201,168,76,0.25); flex-shrink: 0; line-height: 1; margin-top: 2px; }
+  .resto-name { font-family: 'Playfair Display', serif; font-size: 15px; font-weight: 700; color: var(--text); }
+  .resto-addr { font-size: 12px; color: var(--muted); margin: 1px 0 5px; }
+  .resto-desc { font-size: 13px; color: #B0A89E; line-height: 1.4; }
+
+  .nav-card { background: var(--card); border: 1px solid #2E2B27; border-radius: 13px; padding: 14px; margin-bottom: 8px; }
+  .nav-card-title { font-size: 13px; font-weight: 500; color: var(--gold); margin-bottom: 4px; }
+  .nav-card p { font-size: 13px; color: #B0A89E; line-height: 1.5; }
+
+  .alert { background: rgba(232,98,74,0.08); border: 1px solid rgba(232,98,74,0.25); border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; }
+  .alert-title { font-size: 13px; font-weight: 500; color: #F0876D; margin-bottom: 3px; }
+  .alert p { font-size: 13px; color: #B0A89E; line-height: 1.4; }
+
+  .divider { height: 1px; background: linear-gradient(90deg, transparent, #2E2B27, transparent); margin: 22px 16px 0; }
+
+  /* VINYL */
+  .wishlist-card { background: var(--card); border: 1px solid #2E2B27; border-radius: 13px; padding: 13px 14px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .wishlist-artist { font-size: 11px; color: var(--muted); margin-bottom: 2px; }
+  .wishlist-title { font-family: 'Playfair Display', serif; font-size: 14px; font-weight: 700; color: var(--text); }
+  .wishlist-format { font-size: 11px; color: #5A5550; margin-top: 2px; }
+  .wishlist-price { font-family: 'Playfair Display', serif; font-size: 15px; font-weight: 700; color: var(--gold); white-space: nowrap; text-align: right; flex-shrink: 0; }
+
+  /* TIMELINE */
+  .timeline { padding: 0 16px; }
+  .tl-item { display: flex; gap: 12px; }
+  .tl-left { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; width: 48px; }
+  .tl-time { font-size: 11px; font-weight: 500; color: var(--gold); text-align: center; line-height: 1.2; margin-top: 4px; }
+  .tl-line { flex: 1; width: 1px; background: #2E2B27; margin: 4px 0; min-height: 14px; }
+  .tl-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--gold); margin-top: 6px; flex-shrink: 0; }
+  .tl-content { background: var(--card); border: 1px solid #2E2B27; border-radius: 12px; padding: 10px 13px; margin-bottom: 8px; flex: 1; }
+  .tl-place { font-weight: 500; font-size: 14px; color: var(--text); }
+  .tl-desc { font-size: 12px; color: #B0A89E; margin-top: 2px; line-height: 1.4; }
+  .tl-tag { display: inline-block; margin-top: 5px; background: rgba(180,100,200,0.12); border: 1px solid rgba(180,100,200,0.3); color: #C87EDE; font-size: 10px; font-weight: 500; padding: 2px 8px; border-radius: 8px; }
+  .tl-tag.food { background: rgba(232,98,74,0.12); border-color: rgba(232,98,74,0.3); color: #F0876D; }
+  .tl-tag.music { background: rgba(90,138,106,0.12); border-color: rgba(90,138,106,0.3); color: #7DC492; }
+
+  .park-card { background: var(--card); border: 1px solid #2E2B27; border-radius: 13px; padding: 12px 14px; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; }
+  .park-icon { font-size: 20px; flex-shrink: 0; }
+  .park-name { font-size: 14px; font-weight: 500; color: var(--text); }
+  .park-dist { font-size: 12px; color: var(--muted); margin-top: 1px; }
+
+  .homescreen-tip { margin: 20px 16px 0; background: rgba(74,124,181,0.08); border: 1px solid rgba(74,124,181,0.25); border-radius: 12px; padding: 12px 14px; font-size: 12px; color: #8AABCC; line-height: 1.5; }
+  .homescreen-tip strong { display: block; margin-bottom: 2px; color: #9EC0E0; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="city-label">🇧🇪 Weekendgids</div>
+  <h1>Ant<span>werpen</span></h1>
+  <div class="date-badge">18 – 19 april 2026</div>
+</header>
+
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="showTab('musea',this)">
+    <span class="tab-icon">🎨</span>Musea
+  </button>
+  <button class="tab-btn" onclick="showTab('vinyl',this)">
+    <span class="tab-icon">🎷</span>Vinyl RSD
+  </button>
+  <button class="tab-btn" onclick="showTab('kaart',this)">
+    <span class="tab-icon">🗺</span>Kaart
+  </button>
+  <button class="tab-btn" onclick="showTab('reis',this)">
+    <span class="tab-icon">🚗</span>Reis
+  </button>
+</div>
+
+<!-- ===== MUSEA ===== -->
+<div id="panel-musea" class="panel active">
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon icon-gold">🎫</div>
+      <h2>Antwerp City Pass</h2>
+    </div>
+    <div class="pass-card">
+      <div class="pass-price">± €45 <span>/ 72 uur</span></div>
+      <div class="pass-features">
+        <div class="pass-feature">Onbeperkt tram & bus (De Lijn) — scan QR bij rit</div>
+        <div class="pass-feature">Gratis toegang alle musea hieronder</div>
+        <div class="pass-feature">Kopen via Visit Antwerpen app of website</div>
+        <div class="pass-feature">PDF opslaan in Apple Wallet of Bestanden (offline)</div>
+      </div>
+      <div class="savings-pill">Besparing ± €54 op museumtickets</div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon icon-gold">🎨</div>
+      <h2>Schilderkunst Route</h2>
+    </div>
+    <div class="museum-card">
+      <div class="museum-name">Snijders&Rockoxhuis</div>
+      <div class="museum-highlight">16e-eeuwse meesters</div>
+      <div class="hours-row">
+        <div class="hours-pill"><span class="hours-day">Za 18/4</span><span class="hours-time">10:00–17:00</span></div>
+        <div class="hours-pill"><span class="hours-day">Zo 19/4</span><span class="hours-time">10:00–17:00</span></div>
+      </div>
+    </div>
+    <div class="museum-card">
+      <div class="museum-name">O.L.V. Kathedraal</div>
+      <div class="museum-highlight">Rubens & Quinten Metsijs</div>
+      <div class="hours-row">
+        <div class="hours-pill"><span class="hours-day">Za 18/4</span><span class="hours-time">10:00–15:00</span></div>
+        <div class="hours-pill"><span class="hours-day">Zo 19/4</span><span class="hours-time">13:00–17:00</span></div>
+      </div>
+      <div class="tip-tag">⚠️ Zondag: pas na 13u (ochtenddienst)</div>
+    </div>
+    <div class="museum-card">
+      <div class="museum-name">Mayer van den Bergh</div>
+      <div class="museum-highlight">Bruegel — Dulle Griet</div>
+      <div class="hours-row">
+        <div class="hours-pill"><span class="hours-day">Za 18/4</span><span class="hours-time">10:00–17:00</span></div>
+        <div class="hours-pill"><span class="hours-day">Zo 19/4</span><span class="hours-time">10:00–17:00</span></div>
+      </div>
+    </div>
+    <div class="museum-card">
+      <div class="museum-name">KMSKA (Zuid)</div>
+      <div class="museum-highlight">Van Eyck & Memling · Expo "Zingend rood"</div>
+      <div class="hours-row">
+        <div class="hours-pill"><span class="hours-day">Za 18/4</span><span class="hours-time">10:00–17:00</span></div>
+        <div class="hours-pill"><span class="hours-day">Zo 19/4</span><span class="hours-time">10:00–17:00</span></div>
+      </div>
+      <div class="tip-tag">📌 Reserveer gratis tijdslot vooraf</div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon icon-red">🍽</div>
+      <h2>Eten & Drinken</h2>
+    </div>
+    <div class="resto-card">
+      <div class="resto-num">1</div>
+      <div><div class="resto-name">Bourla</div><div class="resto-addr">Graanmarkt 7</div><div class="resto-desc">Klassiek Frans-Belgisch in historisch theatergebouw. Nabij Mayer van den Bergh.</div></div>
+    </div>
+    <div class="resto-card">
+      <div class="resto-num">2</div>
+      <div><div class="resto-name">Billie's Bier Kafétaria</div><div class="resto-addr">Kammenstraat 12</div><div class="resto-desc">Authentiek Antwerps. Beroemd om het stoofvlees. Nabij de Kathedraal.</div></div>
+    </div>
+    <div class="resto-card">
+      <div class="resto-num">3</div>
+      <div><div class="resto-name">Vismijn</div><div class="resto-addr">Leopold de Waelstraat 12</div><div class="resto-desc">Verfijnde bistro direct tegenover het KMSKA.</div></div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon icon-blue">🚇</div>
+      <h2>OV & Routes</h2>
+    </div>
+    <div class="nav-card">
+      <div class="nav-card-title">🚃 Naar KMSKA (Zuid)</div>
+      <p>Tram 1 of 10 vanaf Groenplaats. Uitstappen: halte <strong>Museum</strong>.</p>
+    </div>
+    <div class="nav-card">
+      <div class="nav-card-title">🚶 Wandelroute centrum → KMSKA</div>
+      <p>Via de <strong>Kloosterstraat</strong> — vol antiek en curiosa. Zondag volledig open.</p>
+    </div>
+    <div class="nav-card">
+      <div class="nav-card-title">📲 Offline</div>
+      <p>Sla je City Pass PDF op in Apple Wallet of Bestanden. Werkt zonder 4G.</p>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon icon-red">⚠️</div>
+      <h2>Let op</h2>
+    </div>
+    <div class="alert">
+      <div class="alert-title">KMSKA Tijdelijke Expo</div>
+      <p>"Zingend rood" — kleurgebruik Ensor & Wouters. Reserveer tijdslot vooraf via City Pass.</p>
+    </div>
+    <div class="alert">
+      <div class="alert-title">Kathedraal op zondag</div>
+      <p>Pas toegang vanaf 13:00u vanwege ochtenddiensten.</p>
+    </div>
+  </div>
+
+  <div class="homescreen-tip">
+    <strong>💡 Voeg toe aan beginscherm</strong>
+    Safari → Deel-knop (□↑) → "Zet op beginscherm" → werkt als app, ook offline.
+  </div>
+</div>
+
+<!-- ===== VINYL / RSD ===== -->
+<div id="panel-vinyl" class="panel">
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon icon-vinyl">🎷</div>
+      <h2>RSD 2026 · 18 april</h2>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon icon-gold">🛒</div>
+      <h2>Jazz Wishlist</h2>
+    </div>
+    <div class="wishlist-card">
+      <div><div class="wishlist-artist">John Coltrane</div><div class="wishlist-title">France 1965</div><div class="wishlist-format">4-LP Box</div></div>
+      <div class="wishlist-price">€95–115</div>
+    </div>
+    <div class="wishlist-card">
+      <div><div class="wishlist-artist">Bill Evans</div><div class="wishlist-title">At the BBC</div><div class="wishlist-format">2-LP</div></div>
+      <div class="wishlist-price">€45–55</div>
+    </div>
+    <div class="wishlist-card">
+      <div><div class="wishlist-artist">Chet Baker</div><div class="wishlist-title">Live in Japan (Vol 1 & 2)</div><div class="wishlist-format">LP · per stuk</div></div>
+      <div class="wishlist-price">€32–38</div>
+    </div>
+    <div class="wishlist-card">
+      <div><div class="wishlist-artist">Miles Davis</div><div class="wishlist-title">The New Sounds</div><div class="wishlist-format">10"</div></div>
+      <div class="wishlist-price">€25–32</div>
+    </div>
+    <div class="wishlist-card">
+      <div><div class="wishlist-artist">Joe Henderson</div><div class="wishlist-title">Jazz Showcase</div><div class="wishlist-format">3-LP Box</div></div>
+      <div class="wishlist-price">€75–85</div>
+    </div>
+    <div class="wishlist-card">
+      <div><div class="wishlist-artist">Abbey Lincoln</div><div class="wishlist-title">That's Him!</div><div class="wishlist-format">LP</div></div>
+      <div class="wishlist-price">€30–36</div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="section" style="margin-bottom:14px">
+    <div class="section-header">
+      <div class="section-icon icon-green">⏱</div>
+      <h2>Tijdschema</h2>
+    </div>
+  </div>
+
+  <div class="timeline">
+    <div class="tl-item">
+      <div class="tl-left"><div class="tl-dot"></div><div class="tl-time">10:00</div><div class="tl-line"></div></div>
+      <div class="tl-content"><div class="tl-place">Bananarama</div><div class="tl-desc">Station — Opening. Eerste mainstream jazz-titels.</div><span class="tl-tag">🎵 vinyl</span></div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-left"><div class="tl-dot"></div><div class="tl-time">11:00</div><div class="tl-line"></div></div>
+      <div class="tl-content"><div class="tl-place">The Rocking Bull</div><div class="tl-desc">Extra stop op weg naar centrum.</div><span class="tl-tag">🎵 vinyl</span></div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-left"><div class="tl-dot"></div><div class="tl-time">12:00</div><div class="tl-line"></div></div>
+      <div class="tl-content"><div class="tl-place">TUNE UP (Melkmarkt)</div><div class="tl-desc">Hoofddoel. Jazz graven + Mauro Pawlowski live.</div><span class="tl-tag">🎵 hoofddoel</span></div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-left"><div class="tl-dot"></div><div class="tl-time">13:30</div><div class="tl-line"></div></div>
+      <div class="tl-content"><div class="tl-place">Lunch</div><div class="tl-desc">House of Kua (overkant) of Wasbar (naast de deur).</div><span class="tl-tag food">🍜 eten</span></div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-left"><div class="tl-dot"></div><div class="tl-time">15:00</div><div class="tl-line"></div></div>
+      <div class="tl-content"><div class="tl-place">Fat Kat & Chelsea</div><div class="tl-desc">Digging — tweedehands parels.</div><span class="tl-tag">🎵 vinyl</span></div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-left"><div class="tl-dot"></div><div class="tl-time">17:00</div><div class="tl-line"></div></div>
+      <div class="tl-content"><div class="tl-place">TUNE UP</div><div class="tl-desc">Borrel + DJ-sets Aso Asın & Katrijn Sermeus.</div><span class="tl-tag music">🍺 borrel</span></div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-left"><div class="tl-dot"></div><div class="tl-time">20:00</div><div class="tl-line"></div></div>
+      <div class="tl-content"><div class="tl-place">Het Bos</div><div class="tl-desc">Live: Dans Dans — moderne jazz-fusion.</div><span class="tl-tag music">🎸 live</span></div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-left"><div class="tl-dot"></div><div class="tl-time">22:00</div></div>
+      <div class="tl-content"><div class="tl-place">De Muze</div><div class="tl-desc">Afsluiten: live jazz Mazzle + vinyl DJ's.</div><span class="tl-tag music">🎺 jazz</span></div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon icon-blue">🅿️</div>
+      <h2>Parkeren</h2>
+    </div>
+    <div class="park-card">
+      <div class="park-icon">🅿️</div>
+      <div><div class="park-name">Parking Groenplaats</div><div class="park-dist">&lt; 5 min lopen van Tune Up</div></div>
+    </div>
+    <div class="park-card">
+      <div class="park-icon">🅿️</div>
+      <div><div class="park-name">Parking Meir</div><div class="park-dist">&lt; 5 min lopen van Tune Up</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== REIS ===== -->
+<div id="panel-reis" class="panel">
+
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon icon-blue">&#x1F697;</div>
+      <h2>Aankomst &middot; Vrijdag 17/4</h2>
+    </div>
+  </div>
+
+  <div class="timeline" style="padding-top:4px">
+    <div class="tl-item">
+      <div class="tl-left"><div class="tl-dot"></div><div class="tl-time">13:30</div><div class="tl-line"></div></div>
+      <div class="tl-content"><div class="tl-place">Vertrek Breda</div><div class="tl-desc">E19 richting Antwerpen.</div></div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-left"><div class="tl-dot"></div><div class="tl-time">14:20</div><div class="tl-line"></div></div>
+      <div class="tl-content"><div class="tl-place">Aankomst P+R Linkeroever</div><div class="tl-desc">Blancefloerlaan 501, 2050 Antwerpen.</div><span class="tl-tag food">&#x1F17F;&#xFE0F; &euro;1/dag</span></div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-left"><div class="tl-dot"></div><div class="tl-time">14:35</div><div class="tl-line"></div></div>
+      <div class="tl-content"><div class="tl-place">Tramvertrek P+R Linkeroever</div><div class="tl-desc">Tram 5 of 15. City Pass geldig.</div><span class="tl-tag">&#x1F68B; tram</span></div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-left"><div class="tl-dot"></div><div class="tl-time">15:00</div></div>
+      <div class="tl-content"><div class="tl-place">Aankomst centrum</div><div class="tl-desc">Halte Groenplaats &mdash; of overstap Tram 4 &rarr; Sint-Andries (minder lopen met bagage).</div><span class="tl-tag music">&#x2705; er zijn</span></div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon icon-blue">&#x1F6E3;</div>
+      <h2>Autoroute</h2>
+    </div>
+    <div class="nav-card">
+      <div class="nav-card-title">E19 &rarr; Ring R1 &rarr; Kennedytunnel &rarr; Afrit 6</div>
+      <p>Afrit 6 Linkeroever &rarr; Blancefloerlaan &rarr; P+R aan de rechterkant.</p>
+    </div>
+    <div class="museum-card">
+      <div class="museum-name" style="font-size:14px">P+R Linkeroever</div>
+      <div class="museum-highlight">Blancefloerlaan 501, 2050 Antwerpen</div>
+      <div style="font-size:13px;color:#B0A89E;margin-top:6px">Kosten: <strong style="color:var(--gold)">&euro;1 per dag</strong> &middot; Bewaakt &middot; 24/7 open</div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon icon-green">&#x1F68B;</div>
+      <h2>Tram naar centrum</h2>
+    </div>
+    <div class="nav-card">
+      <div class="nav-card-title">Opstappen: halte &lsquo;P+R Linkeroever&rsquo;</div>
+      <p>Direct bij de parkeergarage.</p>
+    </div>
+    <div class="nav-card">
+      <div class="nav-card-title">Optie A &mdash; Groenplaats (snelst)</div>
+      <p>Tram 5 of 15 &rarr; halte <strong>Groenplaats</strong>.</p>
+    </div>
+    <div class="nav-card">
+      <div class="nav-card-title">Optie B &mdash; Sint-Andries (minder lopen)</div>
+      <p>Tram 5 of 15 &rarr; Groenplaats &rarr; overstap <strong>Tram 4</strong> &rarr; halte <strong>Sint-Andries</strong>. Handig met koffers richting Kloosterstraat.</p>
+    </div>
+    <div class="alert" style="margin-top:4px">
+      <div class="alert-title">City Pass geldig</div>
+      <p>Op alle De Lijn trams en bussen. Geen extra ticket nodig.</p>
+    </div>
+  </div>
+
+  <div style="height:40px"></div>
+</div>
+
+<!-- ===== KAART ===== -->
+<div id="panel-kaart" class="panel">
+  <div id="map"></div>
+</div>
+
+<script>
+function showTab(tab, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + tab).classList.add('active');
+  btn.classList.add('active');
+  if (tab === 'kaart') setTimeout(initMap, 80);
+}
+
+let mapInited = false;
+function initMap() {
+  if (mapInited) return;
+  mapInited = true;
+  const map = L.map('map').setView([51.2195, 4.403], 14);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: '© OpenStreetMap © CARTO', maxZoom: 19
+  }).addTo(map);
+
+  function icon(emoji, bg) {
+    return L.divIcon({
+      html: `<div style="background:${bg};width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;border:2px solid rgba(255,255,255,0.15);box-shadow:0 2px 10px rgba(0,0,0,0.6)">${emoji}</div>`,
+      className: '', iconSize: [34,34], iconAnchor: [17,17], popupAnchor: [0,-20]
+    });
+  }
+
+  // Musea (goud)
+  [
+    [51.2243, 4.4086, 'Snijders&Rockoxhuis', '16e-eeuwse meesters'],
+    [51.2209, 4.4003, 'O.L.V. Kathedraal', 'Rubens & Quinten Metsijs · Zo pas 13u'],
+    [51.2178, 4.4011, 'Mayer van den Bergh', 'Bruegel — Dulle Griet'],
+    [51.2125, 4.4028, 'KMSKA', 'Van Eyck & Memling · Reserveer tijdslot'],
+  ].forEach(([lat,lng,name,sub]) =>
+    L.marker([lat,lng], {icon: icon('🎨','#2A2010')}).addTo(map)
+      .bindPopup(`<b>${name}</b><br><small style="color:#C9A84C">${sub}</small>`)
+  );
+
+  // Platenzaken (paars)
+  [
+    [51.2173, 4.4211, 'Bananarama', 'Platenzaak · Station · 10:00'],
+    [51.2198, 4.4072, 'The Rocking Bull', 'Platenzaak · 11:00'],
+    [51.2215, 4.3981, 'TUNE UP', 'Melkmarkt — hoofddoel · 12:00 & 17:00'],
+    [51.2191, 4.3963, 'Fat Kat Records', 'Tweedehands · 15:00'],
+    [51.2185, 4.3971, 'Chelsea Records', 'Tweedehands · 15:00'],
+  ].forEach(([lat,lng,name,sub]) =>
+    L.marker([lat,lng], {icon: icon('🎷','#1E0A2A')}).addTo(map)
+      .bindPopup(`<b>${name}</b><br><small style="color:#C87EDE">${sub}</small>`)
+  );
+
+  // Avond (groen)
+  [
+    [51.2105, 4.4102, 'Het Bos', 'Dans Dans · Live jazz · 20:00'],
+    [51.2203, 4.4018, 'De Muze', 'Mazzle + vinyl DJ\'s · 22:00'],
+  ].forEach(([lat,lng,name,sub]) =>
+    L.marker([lat,lng], {icon: icon('🎸','#0A1A0E')}).addTo(map)
+      .bindPopup(`<b>${name}</b><br><small style="color:#7DC492">${sub}</small>`)
+  );
+
+  // Restaurants
+  [
+    [51.2192, 4.4005, 'Bourla', 'Restaurant · Graanmarkt 7'],
+    [51.2207, 4.4008, "Billie's Bier Kafétaria", 'Restaurant · Kammenstraat 12'],
+    [51.2128, 4.4031, 'Vismijn', 'Restaurant · tegenover KMSKA'],
+  ].forEach(([lat,lng,name,sub]) =>
+    L.marker([lat,lng], {icon: icon('🍽','#1A0A0A')}).addTo(map)
+      .bindPopup(`<b>${name}</b><br><small style="color:#F0876D">${sub}</small>`)
+  );
+}
+</script>
+</body>
+</html>
