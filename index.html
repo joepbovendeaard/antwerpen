@@ -852,7 +852,9 @@ function showTab(tab, btn) {
   btn.classList.add('active');
   if (tab === 'kaart') setTimeout(initMap, 80);
 }
+</script>
 
+<script>
 const GKEY = 'AIzaSyCNXAV9oi1Q8boTYJjenimRCMmTwpHtH5E';
 
 // All places with real addresses — Google geocodes them
@@ -965,16 +967,12 @@ window.onGoogleReady = function() {
           position: pos,
           map: gmap,
           title: p.name,
-          label: {
-            text: p.icon,
-            fontSize: '18px'
-          },
           icon: {
             path: google.maps.SymbolPath.CIRCLE,
-            scale: 18,
-            fillColor: '#1a1814',
-            fillOpacity: 0.92,
-            strokeColor: color,
+            scale: 14,
+            fillColor: color,
+            fillOpacity: 0.9,
+            strokeColor: '#ffffff',
             strokeWeight: 2,
           }
         });
@@ -985,7 +983,7 @@ window.onGoogleReady = function() {
         marker.addListener('click', function() {
           infoWindow.setContent(
             '<div style="font-family:sans-serif;padding:4px 2px;min-width:180px">' +
-            '<div style="font-size:15px;font-weight:700;margin-bottom:2px">' + p.icon + ' ' + p.name + '</div>' +
+            '<div style="font-size:15px;font-weight:700;margin-bottom:2px">' + p.name + '</div>' +
             '<div style="font-size:12px;color:#666;margin-bottom:10px">' + p.sub + '</div>' +
             '<a href="' + mapsUrl + '" style="display:block;text-align:center;background:#007AFF;color:#fff;padding:8px;border-radius:8px;text-decoration:none;font-size:13px;font-weight:600">Navigeer in Apple Maps</a>' +
             '</div>'
