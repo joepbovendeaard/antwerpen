@@ -129,6 +129,9 @@
   <button class="tab-btn" onclick="showTab('reis',this)">
     <span class="tab-icon">🚗</span>Reis
   </button>
+  <button class="tab-btn" onclick="showTab('kleding',this)">
+    <span class="tab-icon">👔</span>Kleding
+  </button>
 </div>
 
 <!-- ===== MUSEA ===== -->
@@ -436,6 +439,79 @@
   <div style="height:40px"></div>
 </div>
 
+<!-- ===== KLEDING ===== -->
+<div id="panel-kleding" class="panel">
+
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon icon-vinyl">👔</div>
+      <h2>Kleding · Heren</h2>
+    </div>
+  </div>
+
+  <!-- HIPPE WINKELS -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon icon-gold">🔥</div>
+      <h2>Hip & Karakter</h2>
+    </div>
+
+    <div class="museum-card">
+      <div class="museum-name">Kings & Queens</div>
+      <div class="museum-highlight">Sint-Jorispoort 37 · Denim, workwear, Red Wing boots</div>
+      <div style="font-size:13px;color:#B0A89E;margin-top:6px;line-height:1.5">Pike Brothers, Edwin Japan, Blundstone. Ervaren winkel voor mannen die houden van echte materialen en ambacht.</div>
+      <div style="margin-top:8px;font-size:12px;color:var(--muted)">Ma–Vr 11:30–18:00 · Za 11:00–18:00 · Zo gesloten</div>
+    </div>
+
+    <div class="museum-card">
+      <div class="museum-name">MAN Store Antwerp</div>
+      <div class="museum-highlight">Kloosterstraat 56 · Sophisticated menswear voor volwassen mannen</div>
+      <div style="font-size:13px;color:#B0A89E;margin-top:6px;line-height:1.5">Ralph Lauren, NN.07, A.P.C, Barena Venezia, Won Hundred. Opgericht voor mannen die niet in jongerenmode willen shoppen.</div>
+      <div style="margin-top:8px;font-size:12px;color:var(--muted)">Wo–Za 10:30–18:30 · Zo 12:00–17:00</div>
+      <div class="tip-tag">📍 Zit op je wandelroute Kloosterstraat</div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- BASICS -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon icon-blue">🛒</div>
+      <h2>Basics</h2>
+    </div>
+
+    <div class="museum-card">
+      <div class="museum-name">C&A</div>
+      <div class="museum-highlight">Meir 68 · Basics herenkleding</div>
+      <div style="font-size:13px;color:#B0A89E;margin-top:6px;line-height:1.5">Goede basics: t-shirts, truien, broeken. Ruim aanbod grote maten. Midden op de Meir, makkelijk te combineren met andere boodschappen.</div>
+      <div style="margin-top:8px;font-size:12px;color:var(--muted)">Ma–Za 10:00–19:00 · Zo 12:00–18:00</div>
+    </div>
+
+    <div class="museum-card">
+      <div class="museum-name">UNIQLO</div>
+      <div class="museum-highlight">Meir 67-69 · Japanse basics in topkwaliteit</div>
+      <div style="font-size:13px;color:#B0A89E;margin-top:6px;line-height:1.5">Betere kwaliteit dan C&A, ook grote maten. Extra Fine Merino, HEATTECH, linnen. Vlakbij C&A op de Meir.</div>
+      <div style="margin-top:8px;font-size:12px;color:var(--muted)">Ma–Za 10:00–19:00 · Zo 12:00–18:00</div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon icon-red">💡</div>
+      <h2>Tip</h2>
+    </div>
+    <div class="alert">
+      <div class="alert-title">Kloosterstraat op zondag</div>
+      <p>MAN Store is zondag open (12–17u). Kings & Queens is zondag gesloten — ga daar dus zaterdag langs. C&A en UNIQLO zijn zondag open vanaf 12u.</p>
+    </div>
+  </div>
+
+  <div style="height:40px"></div>
+</div>
+
 <!-- ===== KAART ===== -->
 <div id="panel-kaart" class="panel">
   <div id="map-search" style="position:relative;z-index:300;padding:10px 12px;background:#f8f6f2;border-bottom:1px solid #ddd;">
@@ -475,6 +551,10 @@ const allPlaces = [
   {lat:51.2192, lng:4.4005, name:'Bourla', sub:'Restaurant — Graanmarkt 7', emoji:'🍽', bg:'#1A0A0A', color:'#F0876D'},
   {lat:51.2207, lng:4.4008, name:"Billie's Bier Kafetaria", sub:'Restaurant — Kammenstraat 12', emoji:'🍽', bg:'#1A0A0A', color:'#F0876D'},
   {lat:51.2128, lng:4.4031, name:'Vismijn', sub:'Restaurant — tegenover KMSKA', emoji:'🍽', bg:'#1A0A0A', color:'#F0876D'},
+  {lat:51.2213, lng:4.3995, name:'Kings & Queens', sub:'Sint-Jorispoort 37 — denim & boots', emoji:'👔', bg:'#0A1020', color:'#8AABCC'},
+  {lat:51.2171, lng:4.3980, name:'MAN Store Antwerp', sub:'Kloosterstraat 56 — mature menswear', emoji:'👔', bg:'#0A1020', color:'#8AABCC'},
+  {lat:51.2198, lng:4.4051, name:'C&A', sub:'Meir 68 — basics & grote maten', emoji:'🛒', bg:'#0A1020', color:'#8AABCC'},
+  {lat:51.2200, lng:4.4054, name:'UNIQLO', sub:'Meir 67-69 — Japanse basics', emoji:'🛒', bg:'#0A1020', color:'#8AABCC'},
 ];
 
 function mapsUrl(lat, lng, name) {
