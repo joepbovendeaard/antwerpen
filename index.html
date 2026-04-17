@@ -111,8 +111,8 @@
 <body>
 
 <header>
-  <div class="city-label">🇧🇪 Weekendgids voor francis en joep</div>
-  <h1>Ant<span>werpen</span> Francis en Joep</h1>
+  <div class="city-label">🇧🇪 Weekendgids</div>
+  <h1>Ant<span>werpen</span></h1>
   <div class="date-badge">18 – 19 april 2026</div>
 </header>
 
@@ -438,6 +438,12 @@
 
 <!-- ===== KAART ===== -->
 <div id="panel-kaart" class="panel">
+  <div id="map-search" style="position:relative;z-index:300;padding:10px 12px;background:#f8f6f2;border-bottom:1px solid #ddd;">
+    <input id="searchbox" type="text" placeholder="Zoek locatie... (bv. KMSKA)" 
+      style="width:100%;padding:9px 14px;border-radius:10px;border:1px solid #ccc;font-size:14px;font-family:inherit;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,0.1);outline:none;"
+      oninput="filterMarkers(this.value)">
+    <div id="search-results" style="display:none;position:absolute;left:12px;right:12px;background:#fff;border:1px solid #ddd;border-radius:10px;margin-top:4px;box-shadow:0 4px 12px rgba(0,0,0,0.15);overflow:hidden;z-index:400;"></div>
+  </div>
   <div id="map"></div>
 </div>
 
@@ -451,63 +457,88 @@ function showTab(tab, btn) {
 }
 
 let mapInited = false;
+let leafletMap = null;
+let allMarkers = [];
+
+const allPlaces = [
+  {lat:51.2243, lng:4.4086, name:'Snijders & Rockoxhuis', sub:'16e-eeuwse meesters', emoji:'🎨', bg:'#2A2010', color:'#C9A84C'},
+  {lat:51.2209, lng:4.4003, name:'O.L.V. Kathedraal', sub:'Rubens & Quinten Metsijs — Zo pas 13u', emoji:'🎨', bg:'#2A2010', color:'#C9A84C'},
+  {lat:51.2178, lng:4.4011, name:'Mayer van den Bergh', sub:'Bruegel — Dulle Griet', emoji:'🎨', bg:'#2A2010', color:'#C9A84C'},
+  {lat:51.2125, lng:4.4028, name:'KMSKA', sub:'Van Eyck & Memling — Reserveer tijdslot', emoji:'🎨', bg:'#2A2010', color:'#C9A84C'},
+  {lat:51.2173, lng:4.4211, name:'Bananarama', sub:'Platenzaak — Station — 10:00', emoji:'🎷', bg:'#1E0A2A', color:'#C87EDE'},
+  {lat:51.2198, lng:4.4072, name:'The Rocking Bull', sub:'Platenzaak — 11:00', emoji:'🎷', bg:'#1E0A2A', color:'#C87EDE'},
+  {lat:51.2215, lng:4.3981, name:'TUNE UP', sub:'Melkmarkt — hoofddoel — 12:00 & 17:00', emoji:'🎷', bg:'#1E0A2A', color:'#C87EDE'},
+  {lat:51.2191, lng:4.3963, name:'Fat Kat Records', sub:'Tweedehands — 15:00', emoji:'🎷', bg:'#1E0A2A', color:'#C87EDE'},
+  {lat:51.2185, lng:4.3971, name:'Chelsea Records', sub:'Tweedehands — 15:00', emoji:'🎷', bg:'#1E0A2A', color:'#C87EDE'},
+  {lat:51.2105, lng:4.4102, name:'Het Bos', sub:'Dans Dans — Live jazz — 20:00', emoji:'🎸', bg:'#0A1A0E', color:'#7DC492'},
+  {lat:51.2203, lng:4.4018, name:'De Muze', sub:'Mazzle + vinyl DJs — 22:00', emoji:'🎸', bg:'#0A1A0E', color:'#7DC492'},
+  {lat:51.2192, lng:4.4005, name:'Bourla', sub:'Restaurant — Graanmarkt 7', emoji:'🍽', bg:'#1A0A0A', color:'#F0876D'},
+  {lat:51.2207, lng:4.4008, name:"Billie's Bier Kafetaria", sub:'Restaurant — Kammenstraat 12', emoji:'🍽', bg:'#1A0A0A', color:'#F0876D'},
+  {lat:51.2128, lng:4.4031, name:'Vismijn', sub:'Restaurant — tegenover KMSKA', emoji:'🍽', bg:'#1A0A0A', color:'#F0876D'},
+];
+
+function mapsUrl(lat, lng, name) {
+  return 'maps://maps.apple.com/?daddr=' + lat + ',' + lng + '&q=' + encodeURIComponent(name);
+}
+
 function initMap() {
   if (mapInited) return;
   mapInited = true;
-  const map = L.map('map').setView([51.2195, 4.403], 14);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  leafletMap = L.map('map').setView([51.2195, 4.403], 14);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
     attribution: '© OpenStreetMap © CARTO', maxZoom: 19
-  }).addTo(map);
+  }).addTo(leafletMap);
 
-  function icon(emoji, bg) {
+  function makeIcon(emoji, bg) {
     return L.divIcon({
-      html: `<div style="background:${bg};width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;border:2px solid rgba(255,255,255,0.15);box-shadow:0 2px 10px rgba(0,0,0,0.6)">${emoji}</div>`,
-      className: '', iconSize: [34,34], iconAnchor: [17,17], popupAnchor: [0,-20]
+      html: '<div style="background:' + bg + ';width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;border:2px solid rgba(0,0,0,0.12);box-shadow:0 2px 8px rgba(0,0,0,0.25)">' + emoji + '</div>',
+      className: '', iconSize: [34,34], iconAnchor: [17,17], popupAnchor: [0,-22]
     });
   }
 
-  // Musea (goud)
-  [
-    [51.2243, 4.4086, 'Snijders&Rockoxhuis', '16e-eeuwse meesters'],
-    [51.2209, 4.4003, 'O.L.V. Kathedraal', 'Rubens & Quinten Metsijs · Zo pas 13u'],
-    [51.2178, 4.4011, 'Mayer van den Bergh', 'Bruegel — Dulle Griet'],
-    [51.2125, 4.4028, 'KMSKA', 'Van Eyck & Memling · Reserveer tijdslot'],
-  ].forEach(([lat,lng,name,sub]) =>
-    L.marker([lat,lng], {icon: icon('🎨','#2A2010')}).addTo(map)
-      .bindPopup(`<b>${name}</b><br><small style="color:#C9A84C">${sub}</small>`)
-  );
-
-  // Platenzaken (paars)
-  [
-    [51.2173, 4.4211, 'Bananarama', 'Platenzaak · Station · 10:00'],
-    [51.2198, 4.4072, 'The Rocking Bull', 'Platenzaak · 11:00'],
-    [51.2215, 4.3981, 'TUNE UP', 'Melkmarkt — hoofddoel · 12:00 & 17:00'],
-    [51.2191, 4.3963, 'Fat Kat Records', 'Tweedehands · 15:00'],
-    [51.2185, 4.3971, 'Chelsea Records', 'Tweedehands · 15:00'],
-  ].forEach(([lat,lng,name,sub]) =>
-    L.marker([lat,lng], {icon: icon('🎷','#1E0A2A')}).addTo(map)
-      .bindPopup(`<b>${name}</b><br><small style="color:#C87EDE">${sub}</small>`)
-  );
-
-  // Avond (groen)
-  [
-    [51.2105, 4.4102, 'Het Bos', 'Dans Dans · Live jazz · 20:00'],
-    [51.2203, 4.4018, 'De Muze', 'Mazzle + vinyl DJ\'s · 22:00'],
-  ].forEach(([lat,lng,name,sub]) =>
-    L.marker([lat,lng], {icon: icon('🎸','#0A1A0E')}).addTo(map)
-      .bindPopup(`<b>${name}</b><br><small style="color:#7DC492">${sub}</small>`)
-  );
-
-  // Restaurants
-  [
-    [51.2192, 4.4005, 'Bourla', 'Restaurant · Graanmarkt 7'],
-    [51.2207, 4.4008, "Billie's Bier Kafétaria", 'Restaurant · Kammenstraat 12'],
-    [51.2128, 4.4031, 'Vismijn', 'Restaurant · tegenover KMSKA'],
-  ].forEach(([lat,lng,name,sub]) =>
-    L.marker([lat,lng], {icon: icon('🍽','#1A0A0A')}).addTo(map)
-      .bindPopup(`<b>${name}</b><br><small style="color:#F0876D">${sub}</small>`)
-  );
+  allPlaces.forEach(function(p, idx) {
+    var popupHtml = '<div style="font-family:sans-serif;min-width:180px;padding:2px 0">'
+      + '<div style="font-weight:700;font-size:14px;margin-bottom:2px">' + p.name + '</div>'
+      + '<div style="font-size:12px;color:' + p.color + ';margin-bottom:10px">' + p.sub + '</div>'
+      + '<a href="' + mapsUrl(p.lat, p.lng, p.name) + '" style="display:block;text-align:center;background:#007AFF;color:#fff;padding:8px 12px;border-radius:8px;text-decoration:none;font-size:13px;font-weight:600">Navigeer in Apple Maps</a>'
+      + '</div>';
+    var marker = L.marker([p.lat, p.lng], {icon: makeIcon(p.emoji, p.bg)})
+      .addTo(leafletMap)
+      .bindPopup(popupHtml, {maxWidth: 240});
+    allMarkers.push({place: p, marker: marker});
+  });
 }
+
+function filterMarkers(query) {
+  var resultsDiv = document.getElementById('search-results');
+  if (!query || query.length < 1) { resultsDiv.style.display = 'none'; return; }
+  var q = query.toLowerCase();
+  var matches = allPlaces.map(function(p, i) { return {p: p, i: i}; })
+    .filter(function(x) { return x.p.name.toLowerCase().indexOf(q) >= 0 || x.p.sub.toLowerCase().indexOf(q) >= 0; });
+  if (matches.length === 0) { resultsDiv.style.display = 'none'; return; }
+  resultsDiv.innerHTML = matches.map(function(x) {
+    return '<div onclick="selectPlace(' + x.i + ')" style="padding:10px 14px;border-bottom:1px solid #eee;cursor:pointer;display:flex;align-items:center;gap:10px">'
+      + '<span style="font-size:18px">' + x.p.emoji + '</span>'
+      + '<div><div style="font-size:14px;font-weight:600;color:#111">' + x.p.name + '</div>'
+      + '<div style="font-size:11px;color:#888">' + x.p.sub + '</div></div></div>';
+  }).join('');
+  resultsDiv.style.display = 'block';
+}
+
+function selectPlace(idx) {
+  var p = allPlaces[idx];
+  document.getElementById('searchbox').value = p.name;
+  document.getElementById('search-results').style.display = 'none';
+  leafletMap.setView([p.lat, p.lng], 17, {animate: true});
+  allMarkers[idx].marker.openPopup();
+}
+
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('#map-search')) {
+    var r = document.getElementById('search-results');
+    if (r) r.style.display = 'none';
+  }
+});
 </script>
 </body>
 </html>
