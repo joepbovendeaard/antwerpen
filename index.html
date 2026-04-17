@@ -897,6 +897,14 @@ const allPlaces = [
   {lat:51.2211, lng:4.4001, name:'Het Elfde Gebod', sub:'Bizarre religieuze kroeg — Torfbrug 10', emoji:'🍺', bg:'#181018', color:'#9E84B0'},
   {lat:51.2287, lng:4.3964, name:'Sint-Annatunnel', sub:'1933 tunnel onder de Schelde — gratis', emoji:'🚇', bg:'#181018', color:'#9E84B0'},
   {lat:51.2270, lng:4.4007, name:'Sint-Pauluskerk + Calvarieberg', sub:'60 levensgrote heiligenbeelden — verborgen tuin', emoji:'⛪', bg:'#181018', color:'#9E84B0'},
+  // Kloosterstraat buurt
+  {lat:51.2158, lng:4.3971, name:'Dansing Chocola', sub:'Iconisch eetcafé — bruine kroeg + eten — Kloosterstraat 159', emoji:'☕', bg:'#1A0A00', color:'#FFB347'},
+  {lat:51.2161, lng:4.3974, name:'Café Heilig Huisken', sub:'Gezellige bruine kroeg — Kloosterstraat 155', emoji:'🍺', bg:'#1A0A00', color:'#FFB347'},
+  {lat:51.2170, lng:4.3979, name:'Café Octo', sub:'Terras op de hoek — koffie & aperitieven — Kloosterstraat 108', emoji:'🐙', bg:'#1A0A00', color:'#FFB347'},
+  {lat:51.2171, lng:4.3980, name:'The Recollection', sub:'Cadeaus & woonaccessoires — Kloosterstraat 54', emoji:'🎁', bg:'#1A0A15', color:'#E8A0C0'},
+  {lat:51.2171, lng:4.3981, name:'MAN Store Antwerp', sub:'Mature menswear — Kloosterstraat 56', emoji:'👔', bg:'#0A1020', color:'#8AABCC'},
+  {lat:51.2172, lng:4.3983, name:'Steen en Been', sub:'Curiosa: schedels, fossielen, vlinders — Kloosterstraat', emoji:'💀', bg:'#181018', color:'#9E84B0'},
+  {lat:51.2174, lng:4.3984, name:'Kings & Queens', sub:'Denim & boots — Sint-Jorispoort 37', emoji:'👔', bg:'#0A1020', color:'#8AABCC'},
 ];
 
 function mapsUrl(lat, lng, name) {
@@ -907,7 +915,7 @@ function initMap() {
   if (mapInited) return;
   mapInited = true;
   leafletMap = L.map('map').setView([51.2195, 4.403], 14);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
     attribution: '© OpenStreetMap © CARTO', maxZoom: 19
   }).addTo(leafletMap);
 
