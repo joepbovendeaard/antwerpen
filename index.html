@@ -998,25 +998,25 @@ window.onGoogleReady = function() {
 };
 
 function filterMarkers(query) {
-  var resultsDiv = document.getElementById('search-results');
-  if (!query || query.length < 1) { resultsDiv.style.display = 'none'; return; }
+  var resultsDiv = document.getElementById("search-results");
+  if (!query || query.length < 1) { resultsDiv.style.display = "none"; return; }
   var q = query.toLowerCase();
   var matches = allPlaces.filter(function(p) {
     return p.name.toLowerCase().indexOf(q) >= 0 || p.sub.toLowerCase().indexOf(q) >= 0;
   });
-  if (!matches.length) { resultsDiv.style.display = 'none'; return; }
+  if (!matches.length) { resultsDiv.style.display = "none"; return; }
   resultsDiv.innerHTML = matches.map(function(p) {
-    return '<div onclick="jumpTo('' + p.name.replace(/'/g,"\'") + '')" style="padding:10px 14px;border-bottom:1px solid #333;cursor:pointer;display:flex;align-items:center;gap:10px">' +
-      '<span style="font-size:18px">' + p.icon + '</span>' +
-      '<div><div style="font-size:14px;font-weight:600;color:#e8e2d9">' + p.name + '</div>' +
-      '<div style="font-size:11px;color:#7a7268">' + p.sub + '</div></div></div>';
-  }).join('');
-  resultsDiv.style.display = 'block';
+    var safeName = p.name.replace(/"/g, "&quot;");
+    return "<div onclick=\"jumpTo(\"" + safeName + "\")\" style=\"padding:10px 14px;border-bottom:1px solid #333;cursor:pointer;display:flex;align-items:center;gap:10px\">" +
+      "<div><div style=\"font-size:14px;font-weight:600;color:#e8e2d9\">" + p.name + "</div>" +
+      "<div style=\"font-size:11px;color:#7a7268\">" + p.sub + "</div></div></div>";
+  }).join("");
+  resultsDiv.style.display = "block";
 }
 
 function jumpTo(name) {
-  document.getElementById('searchbox').value = name;
-  document.getElementById('search-results').style.display = 'none';
+  document.getElementById("searchbox").value = name;
+  document.getElementById("search-results").style.display = "none";
   var found = allMarkers.find(function(m) { return m.place.name === name; });
   if (found && gmap) {
     gmap.setCenter(found.pos);
